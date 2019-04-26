@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>邱洁琳 2019-04-26</title>
+  <style>
+    *{
+      padding: 0px;
+      margin: 0px;
+      border: none;
+      outline: none;
+    }
+    body{
+      background-color: #EEAEAE;
+    }
+    .v-center{
+        position: relative;
+        top: 20%;
+        transform: translateY(-50%);
+    }
+    .h-center{
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .clearfix {
+        *zoom : 1;
+    }
+    .clearfix::after{
+        content: ".";
+        display: block;
+        clear: both;
+        /* 兼容低版本firefox */
+        height: 0;
+        visibility: hidden;
+    }
+    /* 滚动条 */
+    ::-webkit-scrollbar-thumb{
+      background-color:rgb(19, 20, 20);
+      height:50px;
+      outline-offset:-2px;
+      outline:2px solid #fff;  
+      border-radius:4px;
+      border: 2px solid #fff;
+    }
+    ::-webkit-scrollbar{
+      width:8px;
+      height:8px;
+    }
+    ::-webkit-scrollbar-track-piece{
+      background-color:#fff;
+      border-radius:0;
+    }
+    /* 滚动条 */
+    /* Noraml End */
+    .container{
+      height: 500px;
+      width: 500px;
+      background-image: url("西瓜.jpg");
+      font-size: 14px;
+      border-radius: 250px;
+    }
+    .select-box{
+      width: 240px;
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0 auto;
+    }
+    .select-box .select{
+      height: 38px;
+      width: 283px;
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+    }
+    .select-box .select #input{
+      width: 80%;
+      height: 38px;
+      border-radius: 16px;
+      cursor: pointer;
+      padding-left: 15px;
+    }
+    .select-box .option{
+      width: 238px;
+      position: absolute;
+      display: none;
+      margin-top: 8px;
+      background-color: #fff;
+      color: gray;
+      border-radius: 5px;
+    }
+    .select-box .option .isEmpty,
+    .select-box .option .loading{
+      padding: 10px 15px;
+      display: none;
+    }
+    .select-box .option .mock-data{
+      padding: 10px 0px;
+      list-style: none;
+      max-height: 200px;
+      overflow: auto;
+    }
+    .select-box .option .mock-data li {
+      padding: 5px 15px;
+    }
+    .select-box .option .mock-data li:hover{
+      background-image: linear-gradient(to right,#ffffff 0,#EEAEAE 100%);
+      transition: linear 0.5s;
+    }
+
+    .loading{
+       border-top: #000 1px dotted;
+    }
+
+    #asychronounsRun{
+      color:green;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container v-center h-center">
+    <div class="select-box">
+        <div class="select">
+          <input type="text" id="input" placeholder="请选择或输入"></input>
+        </div>
+        <div class="option">
+          <ul class="mock-data">
+          </ul>
+          <div class="isEmpty">暂无此数据,<a id="asychronounsRun">点击进行加载更多</a></div>
+          <div class="loading">Loading...</div>
+        </div>
+    </div>
+  </div>
+  <script>
+        window.onload = () => {
+          let cache = {}
+          let isLoading = false
+          let optionShow = false
+          const body = document.querySelector('body')
+          const input = document.querySelector('#input')
+          const select = document.querySelector('.select')
+          const option = document.querySelector('.option')
+          const loading = document.querySelector('.loading')
+          const empty = document.querySelector('.isEmpty')
+          const notEmpty = document.querySelector('.mock-data')
+          const asyncButton = document.querySelector('#asychronounsRun')
+          
+          // 控制option显示
+          function optionDisplay (optionShow) {
+            let show = optionShow ? 'block' : 'none'
+            option.style.display = show
+            if (optionShow) {
+              handleValueChange()
+            }
+          }
+          
+          // 点击出现/消失
+          function selectClickHandler () {
+            optionShow = !optionShow
+            // option显隐
+            optionDisplay(optionShow)
+          }
+      
+          // 初始化option值
+          function initOption (options, pattern) {
+            if (options.length > 0) {
+              empty.style.display = 'none'
+              notEmpty.style.display = 'block'
+            } else {
+              empty.style.display = 'block'
+              notEmpty.style.display = 'none'
+            }
+            // 初始化
+            while(notEmpty.hasChildNodes()) {
+              notEmpty.removeChild(notEmpty.firstChild);
+            }
+            options.forEach(item => {
+              let li = document.createElement('li')
+              li.setAttribute('data-value', item.value)
+              li.setAttribute('data-label', item.label)
+              let textNode
+              if (pattern) {
+                textNode = document.createElement('span')
+                let redFont = document.createElement('span')
+                let text = document.createTextNode(pattern)
+                redFont.style.color = 'red'
+                redFont.appendChild(text)
+                let restChar = item.label.replace(pattern, '')
+                let blackFont = document.createTextNode(restChar)
+                textNode.appendChild(redFont)
+                textNode.appendChild(blackFont)
+              } else {
+                textNode = document.createTextNode(item.label)
+              }
+              li.appendChild(textNode)
+              notEmpty.appendChild(li)
+            })
+          }
+          // option选项 mock-data
+          let options = [
+            {label: '123', value:1},
+            {label: 'abc', value:2},
+            {label: 'ABC', value:3},
+            {label: '夏天到了', value:4},
+            {label: '热', value:5},
+            {label: '白猫',value:6},
+            {label: '黑喵',value:7},
+            {label: '黑黑',value:8},
+            {label: '白白',value:9},
+          ]
+      
+          adjustData(options)
+          initOption(options)
+      
+          function handleOptionClick ($event) {
+            let element = $event.target
+            if (element.nodeName === 'UL') return
+            if (element.nodeName !== 'LI') {
+              element = element.parentNode
+              if (element.nodeName !== 'LI') {
+                element = element.parentNode
+              }
+            }
+            let label = element.getAttribute('data-label')
+            selectClickHandler()
+            window.setTimeout(() => {
+              input.value = label
+            }, 100)
+          }
+      
+          function handleValueChange () {
+            if (!optionShow) {
+              optionShow = !optionShow
+              optionDisplay(optionShow)
+            }
+            let value = input.value
+            let newOptions
+            if (value === '') {
+              initOption(options)
+              return
+            }
+            if (cache.hasOwnProperty(value.charAt(0))) 
+            {
+              let re = new RegExp('^' + value)
+              newOptions = cache[value.charAt(0)].filter(item => {
+                return re.test(item.label)
+              })
+            } else {
+              newOptions = []
+            }
+            // 过滤已匹配的
+            initOption(newOptions, value)
+          }
+          function handleBodyEvent ($event) {
+            if ($event.target.classList.contains('select-box') && optionShow === true) {
+              optionShow = !optionShow
+              optionDisplay(optionShow)
+            }
+          }
+      
+          
+      
+          function asyncLoading () {
+              isLoading = true
+              showLoadingFlag(isLoading)
+              main()
+          }
+
+          // 显示加载标志
+          function showLoadingFlag (loadingFlag) {
+            if (loadingFlag) {
+              loading.style.display = 'block'
+            } else {
+              loading.style.display = 'none'
+            }
+          }
+
+          function sleep(duration){
+              return new
+              Promise(function(resolve){
+                      setTimeout(resolve,duration)
+                  })
+              }
+          async function asyncF(duration,boolean){
+              isLoading = boolean
+              showLoadingFlag(isLoading)
+              let value = input.value
+              generateRadom(value)
+              await sleep(duration)
+          }
+          async function main(){
+              await asyncF(1000,'false')
+          }
+      
+          
+          // 生成随机option
+          function randomCoding(){
+           //创建26个字母数组
+           var arr = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+           var Value ='';
+           let n = 4;//这个值可以改变的
+           for(var i=0;i<n;i++){
+              Value+=arr[Math.floor(Math.random()*26)];
+           }
+           return Value;
+          }
+          function generateRadom (pattern) {
+            let n = Math.ceil((Math.random() * 12))
+            let loadingResult = []
+            for (let i = 0; i< n; i++) {
+              let value = pattern + randomCoding()
+              loadingResult.push({label: value, value})
+            }
+            initOption(loadingResult, pattern)
+          }
+      
+          // 如果数据量较大
+          function adjustData (options) {
+            cache = {}
+            options.forEach(item => {
+              let firstChar = item.label.charAt(0)
+              if (cache.hasOwnProperty(firstChar)) {
+                cache[firstChar].push({label: item.label, value: item.value})
+              } else {
+                cache[firstChar] = [{label: item.label, value: item.value}]
+              }
+            })
+          }
+          //如果需要兼容IE
+          if (input.onpropertychange) {
+            input.addEventListener('propertychange', handleValueChange)
+          } else {
+            input.addEventListener('input', handleValueChange)
+          }
+          // 添加事件监听
+          asyncButton.addEventListener('click', asyncLoading)
+          select.addEventListener('click', selectClickHandler)
+          notEmpty.addEventListener('click', handleOptionClick)
+          body.addEventListener('click', handleBodyEvent)
+        }
+      </script>
+</body>
+</html>
